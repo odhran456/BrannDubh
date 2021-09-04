@@ -1,5 +1,6 @@
 from operator import sub
 from operator import add
+from BrannDubh import Constants
 
 
 class GameState:
@@ -29,6 +30,14 @@ class GameState:
         ally_location = ()
         captured_piece_info = []
 
+        # here im finding out what is the enemy piece given the turn. i.e. white to move, black is enemy
+        if self.whiteToMove is True:
+            enemy_pieces = ["bP", "bK"]
+            ally_pieces = ["wP"]
+        elif self.whiteToMove is False:
+            enemy_pieces = ["wP"]
+            ally_pieces = ["bP", "bK"]
+
         # remove orthogonal squares that can't exist because maybe you're at the side of the board
         if move.end_row == 0:
             squares_to_check.remove((move.end_row - 1, move.end_col))
@@ -40,18 +49,10 @@ class GameState:
             squares_to_check.remove((move.end_row, move.end_col + 1))
 
         for square in squares_to_check:
-            row_val, col_val = square
+            enemy_row_val, enemy_col_val = square  # check every square thats left in the squares to check
 
-            # here im finding out what is the enemy piece given the turn. i.e. white to move, black is enemy
-            if self.whiteToMove is True:
-                enemy_pieces = ["bP", "bK"]
-                ally_pieces = ["wP"]
-            elif self.whiteToMove is False:
-                enemy_pieces = ["wP"]
-                ally_pieces = ["bP", "bK"]
-
-            if self.board[row_val][col_val] in enemy_pieces:
-                enemy_piece_info.append([self.board[row_val][col_val], square])  # [piece, location]
+            if self.board[enemy_row_val][enemy_col_val] in enemy_pieces:
+                enemy_piece_info.append([self.board[enemy_row_val][enemy_col_val], square])  # [piece, location]
 
         piece_location = (move.end_row, move.end_col)
 
@@ -61,10 +62,19 @@ class GameState:
         for enemy in enemy_piece_info:  # for every enemy we are orthogonal to:
             enemy_piece, enemy_piece_location = enemy
             direction = tuple(map(sub, enemy_piece_location, piece_location))  # get what direction we are to them
-            ally_location = tuple(map(add, enemy_piece_location, direction))  # add this to their posn to know which
-            # square we are checking to see if we have an ally on
+            ally_location = tuple(map(add, enemy_piece_location, direction))  # add this tuple to their posn to know
+            # which square we are checking to see if we have an ally on
 
-            if 0 <= ally_location[0] <= 6 and 0 <= ally_location[1] <= 6:  # don't check for allies outside the board
+            # TODO: special case to do with the centre square, will require logic for king position etc
+
+            # this checks if you're capturing a piece against the corner
+            if (piece_location in [item[1] for item in [*Constants.CORNER_SQUARES_DICT.values()]]) and (enemy_piece_location in [item[0] for item in [*Constants.CORNER_SQUARES_DICT.values()]]):
+                captured_piece_info.append((enemy_piece, enemy_piece_location))
+                # so here we checked if you're two squares adjacently away from the corner, and the enemy is one
+                # square adjacently away from the corner (which basically means the enemy is between you and the
+                # corner)
+            # this checks if you're capturing a piece by having an ally on the opposite side of the enemy
+            elif 0 <= ally_location[0] <= 6 and 0 <= ally_location[1] <= 6:  # don't check for allies outside the board
                 if self.board[ally_location[0]][ally_location[1]] in ally_pieces:  # if we have an ally on the opposite
                     # square
                     captured_piece_info.append((enemy_piece, enemy_piece_location))  # note a piece as captured
