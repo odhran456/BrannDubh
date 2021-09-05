@@ -56,13 +56,14 @@ def draw_board(screen):
     for row in range(Constants.DIMENSION):
         for col in range(Constants.DIMENSION):
             row_col_tuple = (row, col)
-            if row_col_tuple in [*Constants.CORNER_SQUARES_DICT.keys()]:
+            if row_col_tuple in Constants.SPECIAL_SQUARES:
                 colour = p.Color("gold")
             else:
                 colour = colours[
                     ((row + col) % 2)]  # every white space on chess board is even when r+c, hence remainder
                 # will be 0. Same idea for all dark squares being odd, having remainder 1.
-            p.draw.rect(screen, colour, p.Rect((col * Constants.SQ_SIZE, row * Constants.SQ_SIZE), (Constants.SQ_SIZE, Constants.SQ_SIZE)))
+            p.draw.rect(screen, colour, p.Rect((col * Constants.SQ_SIZE, row * Constants.SQ_SIZE),
+                                               (Constants.SQ_SIZE, Constants.SQ_SIZE)))
 
 
 def draw_pieces(screen, board):
@@ -71,7 +72,8 @@ def draw_pieces(screen, board):
             piece = board[row][col]
             if piece != "--":
                 screen.blit(Constants.IMAGES[piece],
-                            p.Rect(((col * Constants.SQ_SIZE) + (Constants.SQ_SIZE // 4), row * Constants.SQ_SIZE), (Constants.SQ_SIZE, Constants.SQ_SIZE)))
+                            p.Rect(((col * Constants.SQ_SIZE) + (Constants.SQ_SIZE // 4), row * Constants.SQ_SIZE),
+                                   (Constants.SQ_SIZE, Constants.SQ_SIZE)))
 
 
 def draw_game_state(screen, gs):
@@ -83,6 +85,3 @@ def draw_game_state(screen, gs):
 if __name__ == "__main__":
     main()
 
-
-print(Constants.CORNER_SQUARES_DICT.values())
-print([item[0] for item in [*Constants.CORNER_SQUARES_DICT.values()]])
