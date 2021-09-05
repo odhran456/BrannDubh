@@ -68,16 +68,30 @@ class GameState:
             # TODO: special case to do with the centre square, will require logic for king position etc
 
             # this checks if you're capturing a piece against the corner
-            if (piece_location in [item[1] for item in [*Constants.CORNER_SQUARES_DICT.values()]]) and (enemy_piece_location in [item[0] for item in [*Constants.CORNER_SQUARES_DICT.values()]]):
+            if (piece_location in Constants.FAR_CORNER_SQUARES) and (enemy_piece_location in Constants.ADJACENT_CORNER_SQUARES):
                 captured_piece_info.append((enemy_piece, enemy_piece_location))
                 # so here we checked if you're two squares adjacently away from the corner, and the enemy is one
                 # square adjacently away from the corner (which basically means the enemy is between you and the
-                # corner)
+                # corner). The second check of checking if the enemy is in the list of squares adjacent to the corner
+                # may not seem strict enough but recall an enemy_piece can only exist if it satisfies the rules in
+                # squares_to_check, so actually everything works
+
             # this checks if you're capturing a piece by having an ally on the opposite side of the enemy
             elif 0 <= ally_location[0] <= 6 and 0 <= ally_location[1] <= 6:  # don't check for allies outside the board
                 if self.board[ally_location[0]][ally_location[1]] in ally_pieces:  # if we have an ally on the opposite
                     # square
                     captured_piece_info.append((enemy_piece, enemy_piece_location))  # note a piece as captured
+
+            # In some cases the throne is hostile, which means that it can replace one of the two pieces involved in
+            # a capture. The throne is never hostile to the king, always hostile to the attackers, and only hostile
+            # to the defenders when the king is not occupying it.
+
+            # Here is logic for throne hostile to defenders (but not king)
+            if (self.whiteToMove is True) and (self.board[Constants.CENTRE_SQUARE[0][0]][Constants.CENTRE_SQUARE[0][1]] != "bK") and (enemy_piece != "bK") and (piece_location in Constants.FAR_CENTRE_SQUARE) and (enemy_piece_location in Constants.ADJACENT_CENTRE_SQUARE):
+                captured_piece_info.append((enemy_piece, enemy_piece_location))
+            # here is logic throne hostile to attackers
+            elif (self.whiteToMove is False) and (piece_location in Constants.FAR_CENTRE_SQUARE) and (enemy_piece_location in Constants.ADJACENT_CENTRE_SQUARE):
+                captured_piece_info.append((enemy_piece, enemy_piece_location))
 
         return captured_piece_info
 
