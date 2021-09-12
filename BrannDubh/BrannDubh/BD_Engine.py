@@ -145,7 +145,6 @@ class GameState:
                         break
                 else:
                     break
-        # TODO: in the end remove centre sqaure and corner squares from list if it's in list
 
     def get_king_moves(self, row, col, moves):
         directions = ((-1, 0), (0, -1), (1, 0), (0, 1))  # up left down right
