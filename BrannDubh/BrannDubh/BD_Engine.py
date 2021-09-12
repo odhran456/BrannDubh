@@ -137,10 +137,11 @@ class GameState:
 
                 if 0 <= potential_end_row < Constants.DIMENSION and 0 <= potential_end_col < Constants.DIMENSION:
                     end_square = self.board[potential_end_row][potential_end_col]
-                    if end_square == '--':
+                    if end_square == '--' and (potential_end_row, potential_end_col) not in Constants.SPECIAL_SQUARES:  # these pieces cant access special squares
                         moves.append(Move((row, col), (potential_end_row, potential_end_col), self.board))
+                    elif (potential_end_row, potential_end_col) in Constants.SPECIAL_SQUARES:
+                        continue  # we dont want to jump out of the loop when it hits special sqaure in previous if statement if it just went to a break statement then
                     else:
-                        # print('Problem:' + '(' + str(row) + ', ' + str(col) + ') -> (' + str(potential_end_row) +',' + str(potential_end_col) + ')')
                         break
                 else:
                     break
