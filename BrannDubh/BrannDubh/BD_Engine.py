@@ -14,10 +14,11 @@ class GameState:
             ["--", "--", "--", "wP", "--", "--", "--"],
             ["--", "--", "--", "wP", "--", "--", "--"]
         ]
+
+        self.moveFunctions = {"P": self.get_regular_moves, "K": self.get_king_moves}
         self.whiteToMove = True
         self.moveLog = []
 
-    # TODO: here i need to add in clause about special squares being capture pieces
     def check_for_captures(self, move):
         # first after a piece moves, check the orthogonal squares to it to see if it's even in contact with enemy
         # pieces. these are the orthogonal squares we will have to check vv
@@ -65,10 +66,9 @@ class GameState:
             ally_location = tuple(map(add, enemy_piece_location, direction))  # add this tuple to their posn to know
             # which square we are checking to see if we have an ally on
 
-            # TODO: special case to do with the centre square, will require logic for king position etc
-
             # this checks if you're capturing a piece against the corner
-            if (piece_location in Constants.FAR_CORNER_SQUARES) and (enemy_piece_location in Constants.ADJACENT_CORNER_SQUARES):
+            if (piece_location in Constants.FAR_CORNER_SQUARES) and (
+                    enemy_piece_location in Constants.ADJACENT_CORNER_SQUARES):
                 captured_piece_info.append((enemy_piece, enemy_piece_location))
                 # so here we checked if you're two squares adjacently away from the corner, and the enemy is one
                 # square adjacently away from the corner (which basically means the enemy is between you and the
@@ -87,10 +87,14 @@ class GameState:
             # to the defenders when the king is not occupying it.
 
             # Here is logic for throne hostile to defenders (but not king)
-            if (self.whiteToMove is True) and (self.board[Constants.CENTRE_SQUARE[0][0]][Constants.CENTRE_SQUARE[0][1]] != "bK") and (enemy_piece != "bK") and (piece_location in Constants.FAR_CENTRE_SQUARE) and (enemy_piece_location in Constants.ADJACENT_CENTRE_SQUARE):
+            if (self.whiteToMove is True) and (
+                    self.board[Constants.CENTRE_SQUARE[0][0]][Constants.CENTRE_SQUARE[0][1]] != "bK") and (
+                    enemy_piece != "bK") and (piece_location in Constants.FAR_CENTRE_SQUARE) and (
+                    enemy_piece_location in Constants.ADJACENT_CENTRE_SQUARE):
                 captured_piece_info.append((enemy_piece, enemy_piece_location))
             # here is logic throne hostile to attackers
-            elif (self.whiteToMove is False) and (piece_location in Constants.FAR_CENTRE_SQUARE) and (enemy_piece_location in Constants.ADJACENT_CENTRE_SQUARE):
+            elif (self.whiteToMove is False) and (piece_location in Constants.FAR_CENTRE_SQUARE) and (
+                    enemy_piece_location in Constants.ADJACENT_CENTRE_SQUARE):
                 captured_piece_info.append((enemy_piece, enemy_piece_location))
 
         return captured_piece_info
@@ -106,6 +110,57 @@ class GameState:
         self.board[move.end_row][move.end_col] = move.piece_moved  # update your new square to have your moved piece
         self.moveLog.append(move)
         self.whiteToMove = not self.whiteToMove
+        print(move.get_algebraic_notation())
+
+    def get_all_possible_moves(self):  # scan the whole board and get every legal move combination
+        moves = []
+        for row in range(len(self.board)):
+            for col in range(len(self.board[row])):  # num cols in given row
+                turn = self.board[row][col][0]
+                if (turn == 'w' and self.whiteToMove) or (turn == 'b' and not self.whiteToMove):  # here the code has bumped into a piece in its search of the board, and if the colour of the piece aligns with whoevers turn it currently is, the possible moves for that piece will be considered
+                    piece = self.board[row][col][1]
+                    self.moveFunctions[piece](row, col, moves)  # calls appropriate move function based on piece type
+                    # if piece == 'P':
+                    #     self.get_regular_moves(row, col, moves)
+                    # elif piece == 'K':
+                    #     self.get_king_moves(row, col, moves)
+
+        return moves
+
+    def get_regular_moves(self, row, col,
+                          moves):  # gets all legal moves for piece located at (r,c) and adds to legal moves list
+        directions = ((-1, 0), (0, -1), (1, 0), (0, 1))  # up left down right
+        for d in directions:
+            for i in range(1, Constants.DIMENSION):
+                potential_end_row = row + (d[0] * i)
+                potential_end_col = col + (d[1] * i)
+
+                if 0 <= potential_end_row < Constants.DIMENSION and 0 <= potential_end_col < Constants.DIMENSION:
+                    end_square = self.board[potential_end_row][potential_end_col]
+                    if end_square == '--':
+                        moves.append(Move((row, col), (potential_end_row, potential_end_col), self.board))
+                    else:
+                        # print('Problem:' + '(' + str(row) + ', ' + str(col) + ') -> (' + str(potential_end_row) +',' + str(potential_end_col) + ')')
+                        break
+                else:
+                    break
+        # TODO: in the end remove centre sqaure and corner squares from list if it's in list
+
+    def get_king_moves(self, row, col, moves):
+        directions = ((-1, 0), (0, -1), (1, 0), (0, 1))  # up left down right
+        for d in directions:
+            for i in range(1, Constants.DIMENSION):
+                potential_end_row = row + (d[0] * i)
+                potential_end_col = col + (d[1] * i)
+
+                if 0 <= potential_end_row <= Constants.DIMENSION and 0 <= potential_end_col <= Constants.DIMENSION:
+                    end_square = self.board[potential_end_row][potential_end_col]
+                    if end_square == '--':
+                        moves.append(Move((row, col), (potential_end_row, potential_end_col), self.board))
+                    else:
+                        break
+            else:
+                break
 
 
 class Move:
@@ -123,8 +178,20 @@ class Move:
         self.piece_captured = board[self.end_row][self.end_col]  # TODO: note in brann dubh: captured piece is not in
         # square you are moving to. however he does en passant i will need to look into. i'm doing this in
         # chek_for_captures()
+        self.moveID = (self.start_row * 1000) + (self.start_col * 100) + (self.end_row * 10) + (
+            self.end_col)  # unique 4 digit numb for move
 
         # TODO: win conditions: OR(piece_moved == bK && end_square in corner_squares, piece_captured == bK)
+
+    # Overridding the equals method, to compare a Move against a move (comparing two objects, instances of the Move class)
+    def __eq__(self, other):
+        if isinstance(other,
+                      Move):  # only check when the other item is an instance of Move class, dont compare numbers to Move object
+            return self.moveID == other.moveID  # i could compare both objects' return vlues of their algebraic notation instead
+        return False
+
+    def __repr__(self):
+        return '[(' + str(self.start_row) + ', ' + str(self.start_col) + ') -> (' + str(self.end_row) + ', ' + str(self.end_col) + ')]'
 
     def get_algebraic_notation(self):
         # TODO: add notation with capturese etc, like in: http://aagenielsen.dk/visspil.php , maybe move this funct to GameState to take advantage of captures func for like nxf3
