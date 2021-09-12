@@ -16,12 +16,14 @@ def main():
     clock = p.time.Clock()
     screen.fill(p.Color("white"))
     gs = BD_Engine.GameState()
+    valid_moves = gs.get_all_possible_moves()
+
+    move_made = False  # flag variable, to ensure we dont call move checker every frame and only when we need it
     load_images(file_path=Constants.FILE_PATH_IMAGES, file_extension=Constants.FILE_EXTENSION)
     running = True
     sq_selected = ()
     player_clicks = []
-    print("Currently debugging. White to move first, although this strict logic has not been coded in yet so black "
-          "could move and collisions would not be realised.")
+
     while running:
         for e in p.event.get():
             if e.type == p.QUIT:
@@ -41,9 +43,19 @@ def main():
             if len(player_clicks) == 2:
                 move = BD_Engine.Move(start_square=player_clicks[0], end_square=player_clicks[1], board=gs.board)
                 print(gs.check_for_captures(move=move))
-                gs.make_move(move=move)
+                if move in valid_moves:  # note: for Move class i overrode __eq__() to allow comparison of two objects
+                    gs.make_move(move=move)
+                    move_made = True
+
+                # gs.make_move(move=move)
+
                 sq_selected = ()
                 player_clicks = []
+
+        if move_made:  # if the flag gets triggered this frame, generate upcoming all possible moves
+            valid_moves = gs.get_all_possible_moves()
+            move_made = False
+            # TODO: Check here if win conditions are satisfied as itll only check after move and not every frame
 
         draw_game_state(screen=screen, gs=gs)
         clock.tick(Constants.MAX_FPS)
