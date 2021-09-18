@@ -18,6 +18,7 @@ class GameState:
         self.moveFunctions = {"P": self.get_regular_moves, "K": self.get_king_moves}
         self.whiteToMove = True
         self.moveLog = []
+        self.win_condition = False
 
     def check_for_captures(self, move):
         # first after a piece moves, check the orthogonal squares to it to see if it's even in contact with enemy
@@ -70,6 +71,8 @@ class GameState:
             if (piece_location in Constants.FAR_CORNER_SQUARES) and (
                     enemy_piece_location in Constants.ADJACENT_CORNER_SQUARES):
                 captured_piece_info.append((enemy_piece, enemy_piece_location))
+                if enemy_piece == "bK":
+                    self.win_condition = True  # it's faster to check here where we have enemy piece if it's the King
                 # so here we checked if you're two squares adjacently away from the corner, and the enemy is one
                 # square adjacently away from the corner (which basically means the enemy is between you and the
                 # corner). The second check of checking if the enemy is in the list of squares adjacent to the corner
@@ -81,6 +84,8 @@ class GameState:
                 if self.board[ally_location[0]][ally_location[1]] in ally_pieces:  # if we have an ally on the opposite
                     # square
                     captured_piece_info.append((enemy_piece, enemy_piece_location))  # note a piece as captured
+                    if enemy_piece == "bK":
+                        self.win_condition = True
 
             # In some cases the throne is hostile, which means that it can replace one of the two pieces involved in
             # a capture. The throne is never hostile to the king, always hostile to the attackers, and only hostile
@@ -120,10 +125,6 @@ class GameState:
                 if (turn == 'w' and self.whiteToMove) or (turn == 'b' and not self.whiteToMove):  # here the code has bumped into a piece in its search of the board, and if the colour of the piece aligns with whoevers turn it currently is, the possible moves for that piece will be considered
                     piece = self.board[row][col][1]
                     self.moveFunctions[piece](row, col, moves)  # calls appropriate move function based on piece type
-                    # if piece == 'P':
-                    #     self.get_regular_moves(row, col, moves)
-                    # elif piece == 'K':
-                    #     self.get_king_moves(row, col, moves)
 
         return moves
 
@@ -153,7 +154,7 @@ class GameState:
                 potential_end_row = row + (d[0] * i)
                 potential_end_col = col + (d[1] * i)
 
-                if 0 <= potential_end_row <= Constants.DIMENSION and 0 <= potential_end_col <= Constants.DIMENSION:
+                if 0 <= potential_end_row < Constants.DIMENSION and 0 <= potential_end_col < Constants.DIMENSION:
                     end_square = self.board[potential_end_row][potential_end_col]
                     if end_square == '--':
                         moves.append(Move((row, col), (potential_end_row, potential_end_col), self.board))
