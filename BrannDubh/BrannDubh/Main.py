@@ -42,19 +42,20 @@ def main():
             # check if a user has made two clicks
             if len(player_clicks) == 2:
                 move = BD_Engine.Move(start_square=player_clicks[0], end_square=player_clicks[1], board=gs.board)
-                print(gs.check_for_captures(move=move))
                 if move in valid_moves:  # note: for Move class i overrode __eq__() to allow comparison of two objects
                     gs.make_move(move=move)
                     move_made = True
-
-                # gs.make_move(move=move)
-
-                sq_selected = ()
-                player_clicks = []
+                    sq_selected = ()
+                    player_clicks = []
+                else:  # if it's not a valid move, the latest piece the person clicked on is probably what they want
+                    # their first click to be
+                    player_clicks = [sq_selected]
 
         if move_made:  # if the flag gets triggered this frame, generate upcoming all possible moves
             valid_moves = gs.get_all_possible_moves()
             move_made = False
+            if gs.win_condition and gs.whiteToMove is False:  # this is checking if black wins
+                print("Winner!")
             # TODO: Check here if win conditions are satisfied as itll only check after move and not every frame
 
         draw_game_state(screen=screen, gs=gs)
@@ -96,4 +97,3 @@ def draw_game_state(screen, gs):
 
 if __name__ == "__main__":
     main()
-
