@@ -55,7 +55,15 @@ def main():
             valid_moves = gs.get_all_possible_moves()
             move_made = False
             if gs.win_condition and gs.whiteToMove is False:  # this is checking if black wins
-                print("Winner!")
+                print("Black is the Winner!")
+
+            # TODO: No working atm.
+            if move.piece_moved == "bK":
+                gs.king_in_corner()
+                print(gs.corner_square_pieces)
+                if gs.win_condition and gs.whiteToMove:
+                    print("White is the Winner!")
+
             # TODO: Check here if win conditions are satisfied as itll only check after move and not every frame
 
         draw_game_state(screen=screen, gs=gs)
