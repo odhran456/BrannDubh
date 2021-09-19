@@ -19,6 +19,9 @@ class GameState:
         self.whiteToMove = True
         self.moveLog = []
         self.win_condition = False
+        self.corner_square_pieces = [self.board[0][0], self.board[0][Constants.DIMENSION - 1],
+                                     self.board[Constants.DIMENSION - 1][0],
+                                     self.board[Constants.DIMENSION - 1][Constants.DIMENSION - 1]]
 
     def check_for_captures(self, move):
         # first after a piece moves, check the orthogonal squares to it to see if it's even in contact with enemy
@@ -122,10 +125,11 @@ class GameState:
         for row in range(len(self.board)):
             for col in range(len(self.board[row])):  # num cols in given row
                 turn = self.board[row][col][0]
-                if (turn == 'w' and self.whiteToMove) or (turn == 'b' and not self.whiteToMove):  # here the code has bumped into a piece in its search of the board, and if the colour of the piece aligns with whoevers turn it currently is, the possible moves for that piece will be considered
+                if (turn == 'w' and self.whiteToMove) or (
+                        turn == 'b' and not self.whiteToMove):  # here the code has bumped into a piece in its search of the board, and if the colour of the piece aligns with whoevers turn it currently is, the possible moves for that piece will be considered
                     piece = self.board[row][col][1]
                     self.moveFunctions[piece](row, col, moves)  # calls appropriate move function based on piece type
-
+        print(len(moves), moves)
         return moves
 
     def get_regular_moves(self, row, col,
@@ -138,10 +142,11 @@ class GameState:
 
                 if 0 <= potential_end_row < Constants.DIMENSION and 0 <= potential_end_col < Constants.DIMENSION:
                     end_square = self.board[potential_end_row][potential_end_col]
-                    if end_square == '--' and (potential_end_row, potential_end_col) not in Constants.SPECIAL_SQUARES:  # these pieces cant access special squares
+                    if end_square == '--' and (potential_end_row,
+                                               potential_end_col) not in Constants.SPECIAL_SQUARES:  # these pieces cant access special squares
                         moves.append(Move((row, col), (potential_end_row, potential_end_col), self.board))
-                    elif (potential_end_row, potential_end_col) in Constants.SPECIAL_SQUARES:
-                        continue  # we dont want to jump out of the loop when it hits special sqaure in previous if statement if it just went to a break statement then
+                    elif (potential_end_row, potential_end_col) == Constants.CENTRE_SQUARE[0] and end_square == '--':
+                        continue  # we dont want to jump out of the loop when it hits special sqaure in previous if statement if it just went to a break statement then, but also if the king is in the centre we dont want to just jump over this tile and keep checking on the other side
                     else:
                         break
                 else:
@@ -160,8 +165,12 @@ class GameState:
                         moves.append(Move((row, col), (potential_end_row, potential_end_col), self.board))
                     else:
                         break
-            else:
-                break
+                else:
+                    break
+
+    def king_in_corner(self):
+        if "bK" in self.corner_square_pieces:
+            self.win_condition = True
 
 
 class Move:
@@ -176,9 +185,7 @@ class Move:
         self.end_row = end_square[0]
         self.end_col = end_square[1]
         self.piece_moved = board[self.start_row][self.start_col]
-        self.piece_captured = board[self.end_row][self.end_col]  # TODO: note in brann dubh: captured piece is not in
-        # square you are moving to. however he does en passant i will need to look into. i'm doing this in
-        # chek_for_captures()
+
         self.moveID = (self.start_row * 1000) + (self.start_col * 100) + (self.end_row * 10) + (
             self.end_col)  # unique 4 digit numb for move
 
@@ -192,7 +199,8 @@ class Move:
         return False
 
     def __repr__(self):
-        return '[(' + str(self.start_row) + ', ' + str(self.start_col) + ') -> (' + str(self.end_row) + ', ' + str(self.end_col) + ')]'
+        return '[(' + str(self.start_row) + ', ' + str(self.start_col) + ') -> (' + str(self.end_row) + ', ' + str(
+            self.end_col) + ')]'
 
     def get_algebraic_notation(self):
         # TODO: add notation with capturese etc, like in: http://aagenielsen.dk/visspil.php , maybe move this funct to GameState to take advantage of captures func for like nxf3
