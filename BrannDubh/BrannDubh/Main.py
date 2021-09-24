@@ -54,17 +54,13 @@ def main():
         if move_made:  # if the flag gets triggered this frame, generate upcoming all possible moves
             valid_moves = gs.get_all_possible_moves()
             move_made = False
-            if gs.win_condition and gs.whiteToMove is False:  # this is checking if black wins
+
+            #  win conditions: OR(piece_moved == bK && end_square in corner_squares, piece_captured == bK)
+            if gs.black_win_condition:  # this is checking if black wins
                 print("Black is the Winner!")
-
-            # TODO: No working atm.
-            if move.piece_moved == "bK":
-                gs.king_in_corner()
-                print(gs.corner_square_pieces)
-                if gs.win_condition and gs.whiteToMove:
-                    print("White is the Winner!")
-
-            # TODO: Check here if win conditions are satisfied as itll only check after move and not every frame
+            if gs.white_win_condition:
+                print("White is the Winner!")
+            # Check here if win conditions are satisfied. itll only check after move and not every frame
 
         draw_game_state(screen=screen, gs=gs)
         clock.tick(Constants.MAX_FPS)
