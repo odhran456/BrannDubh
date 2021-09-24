@@ -18,10 +18,8 @@ class GameState:
         self.moveFunctions = {"P": self.get_regular_moves, "K": self.get_king_moves}
         self.whiteToMove = True
         self.moveLog = []
-        self.win_condition = False
-        self.corner_square_pieces = [self.board[0][0], self.board[0][Constants.DIMENSION - 1],
-                                     self.board[Constants.DIMENSION - 1][0],
-                                     self.board[Constants.DIMENSION - 1][Constants.DIMENSION - 1]]
+        self.black_win_condition = False
+        self.white_win_condition = False
 
     def check_for_captures(self, move):
         # first after a piece moves, check the orthogonal squares to it to see if it's even in contact with enemy
@@ -75,7 +73,7 @@ class GameState:
                     enemy_piece_location in Constants.ADJACENT_CORNER_SQUARES):
                 captured_piece_info.append((enemy_piece, enemy_piece_location))
                 if enemy_piece == "bK":
-                    self.win_condition = True  # it's faster to check here where we have enemy piece if it's the King
+                    self.white_win_condition = True  # it's faster to check here where we have enemy piece if it's the King
                 # so here we checked if you're two squares adjacently away from the corner, and the enemy is one
                 # square adjacently away from the corner (which basically means the enemy is between you and the
                 # corner). The second check of checking if the enemy is in the list of squares adjacent to the corner
@@ -88,7 +86,7 @@ class GameState:
                     # square
                     captured_piece_info.append((enemy_piece, enemy_piece_location))  # note a piece as captured
                     if enemy_piece == "bK":
-                        self.win_condition = True
+                        self.white_win_condition = True
 
             # In some cases the throne is hostile, which means that it can replace one of the two pieces involved in
             # a capture. The throne is never hostile to the king, always hostile to the attackers, and only hostile
@@ -116,6 +114,12 @@ class GameState:
             self.board[loc[0]][loc[1]] = "--"
 
         self.board[move.end_row][move.end_col] = move.piece_moved  # update your new square to have your moved piece
+
+        if move.piece_moved == "bK":  # check if black won the game by getting king to corner
+            king_move = (move.end_row, move.end_col)
+            if king_move in Constants.CORNER_SQUARES:
+                self.black_win_condition = True
+
         self.moveLog.append(move)
         self.whiteToMove = not self.whiteToMove
         print(move.get_algebraic_notation())
@@ -168,10 +172,6 @@ class GameState:
                 else:
                     break
 
-    def king_in_corner(self):
-        if "bK" in self.corner_square_pieces:
-            self.win_condition = True
-
 
 class Move:
     ranks_to_rows = {"1": 6, "2": 5, "3": 4, "4": 3, "5": 2, "6": 1, "7": 0}
@@ -185,11 +185,8 @@ class Move:
         self.end_row = end_square[0]
         self.end_col = end_square[1]
         self.piece_moved = board[self.start_row][self.start_col]
-
         self.moveID = (self.start_row * 1000) + (self.start_col * 100) + (self.end_row * 10) + (
             self.end_col)  # unique 4 digit numb for move
-
-        # TODO: win conditions: OR(piece_moved == bK && end_square in corner_squares, piece_captured == bK)
 
     # Overridding the equals method, to compare a Move against a move (comparing two objects, instances of the Move class)
     def __eq__(self, other):
