@@ -47,6 +47,7 @@ def main():
                     move_made = True
                     sq_selected = ()
                     player_clicks = []
+
                 else:  # if it's not a valid move, the latest piece the person clicked on is probably what they want
                     # their first click to be
                     player_clicks = [sq_selected]
@@ -62,7 +63,7 @@ def main():
                 print("White is the Winner!")
             # Check here if win conditions are satisfied. itll only check after move and not every frame
 
-        draw_game_state(screen=screen, gs=gs)
+        draw_game_state(screen=screen, gs=gs, valid_moves=valid_moves, sq_selected=sq_selected)  # state updates every frame
         clock.tick(Constants.MAX_FPS)
         p.display.flip()
 
@@ -77,10 +78,27 @@ def draw_board(screen):
                 colour = p.Color("gold")
             else:
                 colour = colours[
-                    ((row + col) % 2)]  # every white space on chess board is even when r+c, hence remainder
+                    ((row + col) % 2)]  # every white space on board is even when r+c, hence remainder
                 # will be 0. Same idea for all dark squares being odd, having remainder 1.
             p.draw.rect(screen, colour, p.Rect((col * Constants.SQ_SIZE, row * Constants.SQ_SIZE),
                                                (Constants.SQ_SIZE, Constants.SQ_SIZE)))
+
+
+def draw_highlighted_squares(screen, gs, valid_moves, sq_selected):
+    if sq_selected != ():
+        row, col = sq_selected
+        if gs.board[row][col][0] == ("w" if gs.whiteToMove else "b"):  # ensureing square selected is same colour piece as whoevers turn it is
+            s = p.Surface((Constants.SQ_SIZE, Constants.SQ_SIZE))
+            s.set_alpha(100)
+            s.fill(p.Color('green'))
+            screen.blit(s, (col * Constants.SQ_SIZE, row * Constants.SQ_SIZE))
+            s.fill(p.Color('yellow'))  # change colour for move shower instead of piece selector
+            for move in valid_moves:
+                if move.start_row == row and move.start_col == col:
+                    # screen.blit(s, (move.end_col * Constants.SQ_SIZE, move.end_row * Constants.SQ_SIZE))
+                    screen.blit(p.image.load(Constants.FILE_PATH_IMAGES + 'highlighted' + Constants.FILE_EXTENSION),
+                                p.Rect(((move.end_col * Constants.SQ_SIZE) + (Constants.SQ_SIZE // 4), move.end_row * Constants.SQ_SIZE),
+                                       (Constants.SQ_SIZE, Constants.SQ_SIZE)))
 
 
 def draw_pieces(screen, board):
@@ -93,9 +111,10 @@ def draw_pieces(screen, board):
                                    (Constants.SQ_SIZE, Constants.SQ_SIZE)))
 
 
-def draw_game_state(screen, gs):
+def draw_game_state(screen, gs, valid_moves, sq_selected):
     draw_board(screen)
     # here this function can be used to add legal move highlighting, piece highlighting (later)
+    draw_highlighted_squares(screen=screen, gs=gs, valid_moves=valid_moves, sq_selected=sq_selected)  # toggle this off for performace increase!!
     draw_pieces(screen, gs.board)
 
 
