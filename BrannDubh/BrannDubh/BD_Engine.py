@@ -133,7 +133,7 @@ class GameState:
                         turn == 'b' and not self.whiteToMove):  # here the code has bumped into a piece in its search of the board, and if the colour of the piece aligns with whoevers turn it currently is, the possible moves for that piece will be considered
                     piece = self.board[row][col][1]
                     self.moveFunctions[piece](row, col, moves)  # calls appropriate move function based on piece type
-        print(len(moves), moves)
+        # print(len(moves), moves[0], moves[0].start_row, moves[0].start_col, type(moves[0]))
         return moves
 
     def get_regular_moves(self, row, col,
