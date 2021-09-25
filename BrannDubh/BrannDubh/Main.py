@@ -4,6 +4,7 @@ from BrannDubh import Constants
 
 p.init()
 
+# TODO: Add draw condition, collections.Counter max number in list of self.board[]. I prob need to turn list of lists in board into one long string to make it a hashable object to count.
 
 def load_images(file_path, file_extension):
     pieces = ["wP", "bP", "bK"]
