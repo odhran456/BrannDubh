@@ -1,6 +1,7 @@
 from operator import sub
 from operator import add
 from BrannDubh import Constants
+from collections import Counter
 
 
 class GameState:
@@ -18,8 +19,11 @@ class GameState:
         self.moveFunctions = {"P": self.get_regular_moves, "K": self.get_king_moves}
         self.whiteToMove = True
         self.moveLog = []
+        self.board_log = [
+            "".join([item for sublist in self.board for item in sublist])]  # start with original position loaded in
         self.black_win_condition = False
         self.white_win_condition = False
+        self.draw_condition = False
 
     def check_for_captures(self, move):
         # first after a piece moves, check the orthogonal squares to it to see if it's even in contact with enemy
@@ -32,6 +36,7 @@ class GameState:
         direction = ()
         ally_location = ()
         captured_piece_info = []
+        throne_surround_count = 0
 
         # here im finding out what is the enemy piece given the turn. i.e. white to move, black is enemy
         if self.whiteToMove is True:
@@ -84,9 +89,18 @@ class GameState:
             elif 0 <= ally_location[0] <= 6 and 0 <= ally_location[1] <= 6:  # don't check for allies outside the board
                 if self.board[ally_location[0]][ally_location[1]] in ally_pieces:  # if we have an ally on the opposite
                     # square
+                    if enemy_piece == "bK":  # for king, if he's on throne he needs to be surrounded on all 4 sides. otherwise he can be captured as normal
+                        if enemy_piece_location == Constants.CENTRE_SQUARE[0]:  # if he's on throne, check all 4 sides
+                            for sq in Constants.ADJACENT_CENTRE_SQUARE:  # for all 4 sides, check if an enemy is on each side
+                                if self.board[sq[0]][sq[1]] in ally_pieces:
+                                    throne_surround_count += 1
+                            if throne_surround_count == 3:  # you'd think we'd want 4 hits with each side having an attacker, but the guy that just moved into attack hasn't had his position updated yet. however, he initiated the attack, so he's deifnitly in place, so if the other 3 are hits that's good enough for me
+                                self.white_win_condition = True
+                            else:
+                                continue  # code will not reach captured_piece_info and thus not record as capture(which is good as he's not been captured)
+                        else:  # if he's not on throne, he's been captured as per normal
+                            self.white_win_condition = True
                     captured_piece_info.append((enemy_piece, enemy_piece_location))  # note a piece as captured
-                    if enemy_piece == "bK":
-                        self.white_win_condition = True
 
             # In some cases the throne is hostile, which means that it can replace one of the two pieces involved in
             # a capture. The throne is never hostile to the king, always hostile to the attackers, and only hostile
@@ -122,7 +136,16 @@ class GameState:
 
         self.moveLog.append(move)
         self.whiteToMove = not self.whiteToMove
-        print(move.get_algebraic_notation())
+
+        self.check_for_threefold_repetition()
+
+    def check_for_threefold_repetition(self):  # check if the current position has been repeated three times
+        board_string = "".join([item for sublist in self.board for item in
+                                sublist])  # string representation, need to turn list of lists in board into one long string to make it a hashable object to count with collections.Counter().
+        self.board_log.append(board_string)
+        repetition_count = Counter(self.board_log).most_common(1)[0][1]
+        if repetition_count >= 3:
+            self.draw_condition = True
 
     def get_all_possible_moves(self):  # scan the whole board and get every legal move combination
         moves = []
@@ -143,14 +166,13 @@ class GameState:
             for i in range(1, Constants.DIMENSION):
                 potential_end_row = row + (d[0] * i)
                 potential_end_col = col + (d[1] * i)
-
                 if 0 <= potential_end_row < Constants.DIMENSION and 0 <= potential_end_col < Constants.DIMENSION:
                     end_square = self.board[potential_end_row][potential_end_col]
                     if end_square == '--' and (potential_end_row,
                                                potential_end_col) not in Constants.SPECIAL_SQUARES:  # these pieces cant access special squares
                         moves.append(Move((row, col), (potential_end_row, potential_end_col), self.board))
                     elif (potential_end_row, potential_end_col) == Constants.CENTRE_SQUARE[0] and end_square == '--':
-                        continue  # we dont want to jump out of the loop when it hits special sqaure in previous if statement if it just went to a break statement then, but also if the king is in the centre we dont want to just jump over this tile and keep checking on the other side
+                        continue  # we dont want to jump out of the loop when it hits centre sqaure in previous if statement if it just went to a break statement then, but also if the king is in the centre we dont want to just jump over this tile and keep checking on the other side
                     else:
                         break
                 else:
@@ -162,7 +184,6 @@ class GameState:
             for i in range(1, Constants.DIMENSION):
                 potential_end_row = row + (d[0] * i)
                 potential_end_col = col + (d[1] * i)
-
                 if 0 <= potential_end_row < Constants.DIMENSION and 0 <= potential_end_col < Constants.DIMENSION:
                     end_square = self.board[potential_end_row][potential_end_col]
                     if end_square == '--':
