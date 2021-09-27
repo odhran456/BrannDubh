@@ -195,10 +195,6 @@ class GameState:
 
 
 class Move:
-    ranks_to_rows = {"1": 6, "2": 5, "3": 4, "4": 3, "5": 2, "6": 1, "7": 0}
-    rows_to_ranks = {v: k for k, v in ranks_to_rows.items()}
-    files_to_cols = {"a": 0, "b": 1, "c": 2, "d": 3, "e": 4, "f": 5, "g": 6}
-    cols_to_files = {v: k for k, v in files_to_cols.items()}
 
     def __init__(self, start_square, end_square, board):
         self.start_row = start_square[0]
@@ -226,4 +222,4 @@ class Move:
                                                                                                self.end_col)
 
     def get_rank_file(self, row, col):
-        return self.cols_to_files[col] + self.rows_to_ranks[row]
+        return Constants.COLS_TO_FILES[col] + Constants.ROWS_TO_RANKS[row]
