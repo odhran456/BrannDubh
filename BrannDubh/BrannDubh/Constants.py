@@ -16,3 +16,11 @@ FAR_CENTRE_SQUARE = [((DIMENSION // 2) - 2, DIMENSION // 2), ((DIMENSION // 2) +
 
 SPECIAL_SQUARES = CORNER_SQUARES + CENTRE_SQUARE
 
+PIECE_VALS = {'K': 4, 'P': 1}
+WIN_VAL = 1000
+DRAW_VAL = 0
+
+RANKS_TO_ROWS = {"1": 6, "2": 5, "3": 4, "4": 3, "5": 2, "6": 1, "7": 0}
+ROWS_TO_RANKS = {v: k for k, v in RANKS_TO_ROWS.items()}
+FILES_TO_COLS = {"a": 0, "b": 1, "c": 2, "d": 3, "e": 4, "f": 5, "g": 6}
+COLS_TO_FILES = {v: k for k, v in FILES_TO_COLS.items()}
